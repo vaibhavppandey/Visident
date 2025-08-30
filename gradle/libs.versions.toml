@@ -16,7 +16,6 @@ lifecycleViewmodelNav3 = "1.0.0-alpha04"
 kotlinSerialization = "2.2.10"
 kotlinxSerializationCore = "1.9.0"
 material3AdaptiveNav3 = "1.0.0-SNAPSHOT"
-compileSdk = "36"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
