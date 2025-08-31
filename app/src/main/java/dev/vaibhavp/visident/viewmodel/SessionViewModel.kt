@@ -11,15 +11,19 @@ import androidx.lifecycle.viewModelScope
 import dev.vaibhavp.visident.util.CameraUtility
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class SessionViewModel : ViewModel() {
     private val _surfaceRequest = MutableStateFlow<SurfaceRequest?>(null)
-    val surfaceRequest: StateFlow<SurfaceRequest?> = _surfaceRequest
+    val surfaceRequest: StateFlow<SurfaceRequest?> = _surfaceRequest.asStateFlow()
 
     private val _capturedImageUri = MutableStateFlow<Uri?>(null)
-    val capturedImageUri: StateFlow<Uri?> = _capturedImageUri
+    val capturedImageUri: StateFlow<Uri?> = _capturedImageUri.asStateFlow()
+
+    private val _pictureCount = MutableStateFlow(0)
+    val pictureCount: StateFlow<Int> = _pictureCount.asStateFlow()
 
     private val cameraPreviewUseCase = Preview.Builder().build().apply {
         setSurfaceProvider { newSurfaceRequest ->
@@ -49,7 +53,12 @@ class SessionViewModel : ViewModel() {
                 context = context,
                 imageCaptureUseCase = imageCaptureUseCase,
                 onImageSaved = { uri ->
-                    _capturedImageUri.update { uri }
+                    if (uri != null) {
+                        _capturedImageUri.update { uri }
+                        _pictureCount.update { it + 1 }
+                    } else {
+                        _capturedImageUri.update { null }
+                    }
                 },
                 onError = {
                     _capturedImageUri.update { null }
