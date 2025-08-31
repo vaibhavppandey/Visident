@@ -8,14 +8,22 @@ import androidx.camera.core.SurfaceRequest
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import dagger.hilt.android.lifecycle.HiltViewModel
+import dev.vaibhavp.visident.repo.SessionRepository
 import dev.vaibhavp.visident.util.CameraUtility
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.io.File
+import javax.inject.Inject
 
-class SessionViewModel : ViewModel() {
+@HiltViewModel
+class SessionViewModel @Inject constructor(
+    private val repository: SessionRepository
+) : ViewModel() {
+
     private val _surfaceRequest = MutableStateFlow<SurfaceRequest?>(null)
     val surfaceRequest: StateFlow<SurfaceRequest?> = _surfaceRequest.asStateFlow()
 
@@ -39,7 +47,6 @@ class SessionViewModel : ViewModel() {
                 lifecycleOwner = lifecycleOwner,
                 previewUseCase = cameraPreviewUseCase,
                 imageCaptureUseCase = imageCaptureUseCase
-                // TODO: front + back camera func
             )
             if (!success) {
                 _surfaceRequest.update { null }
@@ -48,10 +55,12 @@ class SessionViewModel : ViewModel() {
     }
 
     fun takePicture(context: Context) {
-        viewModelScope.launch { 
+        viewModelScope.launch {
+            val outputFile: File = repository.createTempImageFile()
             CameraUtility.takePicture(
                 context = context,
                 imageCaptureUseCase = imageCaptureUseCase,
+                outputFile = outputFile,
                 onImageSaved = { uri ->
                     if (uri != null) {
                         _capturedImageUri.update { uri }
@@ -69,5 +78,13 @@ class SessionViewModel : ViewModel() {
 
     fun clearCapturedImageUri() {
         _capturedImageUri.update { null }
+    }
+
+    fun moveCachedImagesToSession(sessionId: String) {
+        repository.moveCachedImagesToSession(sessionId)
+    }
+
+    fun clearCache() {
+        repository.clearCache()
     }
 }

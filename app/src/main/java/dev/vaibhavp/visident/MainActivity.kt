@@ -5,29 +5,50 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.room.Room
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.rememberNavController
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
-import dev.vaibhavp.visident.data.db.AppDB
+import dagger.hilt.android.AndroidEntryPoint
+import dev.vaibhavp.visident.ui.navigation.CameraCaptureRoute
+import dev.vaibhavp.visident.ui.session.CameraCaptureScreen
+import dev.vaibhavp.visident.ui.theme.VisidentTheme
+import androidx.navigation.compose.composable
+import dev.vaibhavp.visident.ui.navigation.EndSessionRoute
+import dev.vaibhavp.visident.ui.navigation.SearchSessionsRoute
+import dev.vaibhavp.visident.ui.navigation.StartSessionRoute
+import dev.vaibhavp.visident.ui.session.EndSessionScreen
+import dev.vaibhavp.visident.ui.session.StartSessionScreen
+
 
 @ExperimentalMaterial3Api
 @ExperimentalPermissionsApi
+@AndroidEntryPoint // hilt dagger hehe
 class MainActivity : ComponentActivity() {
-
-    companion object {
-        lateinit var database: AppDB
-            private set
-    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        database = Room.databaseBuilder(
-            applicationContext,
-            AppDB::class.java,
-            "visident_db"
-        ).build()
         enableEdgeToEdge()
         setContent {
-            VisidentApp()
+            VisidentTheme {
+                val navController = rememberNavController()
+                NavHost(navController = navController, startDestination = StartSessionRoute) {
+                    composable<StartSessionRoute> {
+                        StartSessionScreen(
+                            onStartNewSessionClick = { navController.navigate(CameraCaptureRoute) },
+                            onSearchSessionClick = { navController.navigate(SearchSessionsRoute) }
+
+                        )
+                    }
+                    composable<CameraCaptureRoute> {
+                        CameraCaptureScreen(
+                            onEndSessionClick = { navController.navigate(EndSessionRoute) }
+                        )
+                    }
+                    composable<EndSessionRoute> {
+                        EndSessionScreen()
+                    }
+                }
+            }
         }
     }
 }

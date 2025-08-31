@@ -46,15 +46,10 @@ object CameraUtility {
     fun takePicture(
         context: Context,
         imageCaptureUseCase: ImageCapture,
+        outputFile: File,
         onImageSaved: (Uri?) -> Unit,
         onError: (ImageCaptureException) -> Unit
     ) {
-        val tempImagesDir = File(context.cacheDir, "temp")
-        if (!tempImagesDir.exists()) {
-            tempImagesDir.mkdirs()
-        }
-        val outputFile = File(tempImagesDir, "${UUID.randomUUID()}.jpg")
-
         val outputOptions = ImageCapture.OutputFileOptions
             .Builder(outputFile)
             .build()

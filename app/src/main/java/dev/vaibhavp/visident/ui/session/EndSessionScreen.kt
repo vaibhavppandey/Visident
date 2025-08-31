@@ -29,7 +29,7 @@ import androidx.compose.ui.unit.dp
 import dev.vaibhavp.visident.ui.theme.VisidentTheme
 import java.util.UUID
 
-@OptIn(ExperimentalMaterial3Api::class)
+@ExperimentalMaterial3Api
 @Composable
 fun EndSessionScreen(
     modifier: Modifier = Modifier,
@@ -119,6 +119,7 @@ fun EndSessionScreen(
 
 @Preview
 @Composable
+@ExperimentalMaterial3Api
 fun EndSessionScreenPreview() {
     VisidentTheme {
         EndSessionScreen()

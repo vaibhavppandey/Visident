@@ -20,22 +20,29 @@ import dev.vaibhavp.visident.ui.theme.VisidentTheme
 
 @ExperimentalMaterial3Api
 @Composable
-fun StartSessionScreen(modifier: Modifier = Modifier) {
-    Scaffold(modifier = modifier.fillMaxSize(), topBar = {
-        TopAppBar(title = { Text(text = "Visident") })
-    }) { padding ->
+fun StartSessionScreen(
+    modifier: Modifier = Modifier,
+    onStartNewSessionClick: () -> Unit,
+    onSearchSessionClick: () -> Unit
+) {
+    Scaffold(
+        modifier = modifier.fillMaxSize(),
+        topBar = {
+            TopAppBar(title = { Text(text = "Visident") })
+        }
+    ) { innerPadding ->
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center,
-            modifier = modifier
+            modifier = Modifier
                 .fillMaxSize()
-                .padding(padding)
+                .padding(innerPadding)
         ) {
-            ElevatedButton(onClick = {}) {
+            ElevatedButton(onClick = onStartNewSessionClick) {
                 Text(text = "Start Session")
             }
-            Spacer(modifier = modifier.height(8.dp))
-            ElevatedButton(onClick = {}) {
+            Spacer(modifier = Modifier.height(8.dp))
+            ElevatedButton(onClick = onSearchSessionClick) {
                 Text(text = "Search Session")
             }
         }
@@ -43,10 +50,13 @@ fun StartSessionScreen(modifier: Modifier = Modifier) {
 }
 
 @ExperimentalMaterial3Api
-@Preview()
+@Preview(showBackground = true)
 @Composable
 fun StartSessionScreenPreview() {
     VisidentTheme {
-        StartSessionScreen()
+        StartSessionScreen(
+            onStartNewSessionClick = {},
+            onSearchSessionClick = {}
+        )
     }
 }

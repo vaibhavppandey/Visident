@@ -29,9 +29,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
@@ -43,8 +43,8 @@ import dev.vaibhavp.visident.viewmodel.SessionViewModel
 @Composable
 fun CameraCaptureScreen(
     modifier: Modifier = Modifier,
-    viewModel: SessionViewModel = viewModel(),
-    onNavigateToNextScreen: () -> Unit = {
+    viewModel: SessionViewModel = hiltViewModel<SessionViewModel>(), // Use hiltViewModel()
+    onEndSessionClick: () -> Unit = {
         Log.d(
             "CameraCaptureScreen",
             "Navigate to next screen triggered"
@@ -67,7 +67,7 @@ fun CameraCaptureScreen(
                     viewModel = viewModel,
                     lifecycleOwner = lifecycleOwner,
                     modifier = Modifier.weight(1f),
-                    onEndSessionClicked = onNavigateToNextScreen
+                    onEndSessionClicked = onEndSessionClick
                 )
             } else {
                 Box {}
@@ -165,6 +165,6 @@ fun CameraPermsDialog(requestCameraPerms: () -> Unit) {
 @ExperimentalMaterial3Api
 fun CameraCaptureScreenPreview() {
     VisidentTheme {
-        CameraCaptureScreen()
+         CameraCaptureScreen(onEndSessionClick = {})
     }
 }
