@@ -13,3 +13,6 @@ object EndSessionRoute
 
 @Serializable
 object SearchSessionsRoute
+
+@Serializable
+data class SessionDetailsRoute(val sessionId: String)

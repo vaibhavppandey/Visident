@@ -5,6 +5,9 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.runtime.Composable
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.rememberNavController
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
@@ -16,8 +19,10 @@ import androidx.navigation.compose.composable
 import dev.vaibhavp.visident.ui.navigation.EndSessionRoute
 import dev.vaibhavp.visident.ui.navigation.SearchSessionsRoute
 import dev.vaibhavp.visident.ui.navigation.StartSessionRoute
+import dev.vaibhavp.visident.ui.navigation.VisidentNavHost
 import dev.vaibhavp.visident.ui.session.EndSessionScreen
 import dev.vaibhavp.visident.ui.session.StartSessionScreen
+import dev.vaibhavp.visident.viewmodel.SessionViewModel
 
 
 @ExperimentalMaterial3Api
@@ -31,24 +36,9 @@ class MainActivity : ComponentActivity() {
         setContent {
             VisidentTheme {
                 val navController = rememberNavController()
-                NavHost(navController = navController, startDestination = StartSessionRoute) {
-                    composable<StartSessionRoute> {
-                        StartSessionScreen(
-                            onStartNewSessionClick = { navController.navigate(CameraCaptureRoute) },
-                            onSearchSessionClick = { navController.navigate(SearchSessionsRoute) }
-
-                        )
-                    }
-                    composable<CameraCaptureRoute> {
-                        CameraCaptureScreen(
-                            onEndSessionClick = { navController.navigate(EndSessionRoute) }
-                        )
-                    }
-                    composable<EndSessionRoute> {
-                        EndSessionScreen()
-                    }
-                }
+                VisidentNavHost(navController = navController)
             }
         }
     }
 }
+

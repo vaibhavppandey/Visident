@@ -9,6 +9,7 @@ import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dev.vaibhavp.visident.data.model.SessionEntity
 import dev.vaibhavp.visident.repo.SessionRepository
 import dev.vaibhavp.visident.util.CameraUtility
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -28,7 +29,6 @@ class SessionViewModel @Inject constructor(
     val surfaceRequest: StateFlow<SurfaceRequest?> = _surfaceRequest.asStateFlow()
 
     private val _capturedImageUri = MutableStateFlow<Uri?>(null)
-    val capturedImageUri: StateFlow<Uri?> = _capturedImageUri.asStateFlow()
 
     private val _pictureCount = MutableStateFlow(0)
     val pictureCount: StateFlow<Int> = _pictureCount.asStateFlow()
@@ -39,6 +39,12 @@ class SessionViewModel @Inject constructor(
         }
     }
     private val imageCaptureUseCase = ImageCapture.Builder().build()
+
+    private val _searchQuery = MutableStateFlow("")
+    val searchQuery: StateFlow<String> = _searchQuery
+
+    private val _filteredSessions = MutableStateFlow<List<SessionEntity>>(emptyList())
+    val filteredSessions: StateFlow<List<SessionEntity>> = _filteredSessions
 
     fun bindToCamera(appContext: Context, lifecycleOwner: LifecycleOwner) {
         viewModelScope.launch {
@@ -76,15 +82,38 @@ class SessionViewModel @Inject constructor(
         }
     }
 
-    fun clearCapturedImageUri() {
-        _capturedImageUri.update { null }
+    fun loadAllSessions() {
+        viewModelScope.launch {
+            _filteredSessions.value = repository.getAllSessions()
+        }
     }
 
-    fun moveCachedImagesToSession(sessionId: String) {
-        repository.moveCachedImagesToSession(sessionId)
+
+    fun finalizeSession(sessionId: String, name: String, age: Int, imageCount: Int, onComplete: () -> Unit) {
+        viewModelScope.launch {
+            val sessionEntity = SessionEntity(
+                sessionId = sessionId,
+                name = name,
+                age = age,
+                imageCount = imageCount
+            )
+            repository.saveSession(sessionEntity)
+            repository.moveCachedImagesToSession(sessionId)
+            repository.clearCache()
+            _pictureCount.update { 0 }
+            onComplete() // final blow
+        }
     }
 
-    fun clearCache() {
-        repository.clearCache()
+    fun onSearchQueryChange(query: String) {
+        _searchQuery.value = query
+        viewModelScope.launch {
+            val sessions = repository.getAllSessions()
+            _filteredSessions.value = sessions.filter {
+                it.sessionId.contains(query, ignoreCase = true) ||
+                        it.name.contains(query, ignoreCase = true)
+            }
+        }
     }
+
 }
