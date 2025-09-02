@@ -195,10 +195,10 @@ graph TD
     J --> K[Session Details & Gallery]
     K --> A
     
-    style A fill:#e1f5fe
-    style C fill:#fff3e0
-    style D fill:#f3e5f5
-    style G fill:#e8f5e8
+    style A fill:#1976d2
+    style C fill:#f57c00
+    style D fill:#7b1fa2
+    style G fill:#388e3c
 ```
 
 ## Database Schema
@@ -336,35 +336,6 @@ Device Storage
 # Clean build
 ./gradlew clean build
 ```
-
-### **CI/CD Pipeline**
-The project includes a custom GitHub Actions workflow for automated builds:
-
-```yaml
-# .github/workflows/publish-apk.yml
-name: Build & Release APK
-on:
-  push:
-    tags: ["*"]
-  workflow_dispatch:
-
-# Features:
-# Java 11 setup matching project config
-# Gradle caching for faster builds
-# Automatic APK generation
-# GitHub Releases with version info
-# Professional release notes
-```
-
-### **Release Process**
-1. **Tag a release**:
-   ```bash
-   git tag v1.0.1
-   git push origin v1.0.1
-   ```
-
-2. **Automatic build**: GitHub Actions builds and creates release
-3. **Download APK**: Available in GitHub Releases
 
 ## License
 

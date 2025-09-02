@@ -1,4 +1,4 @@
-name: Build & Release APK
+name: Build & Release Debug APK
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-and-release:
+  build-debug-and-release:
     runs-on: ubuntu-latest
     
     permissions:
@@ -26,13 +26,25 @@ jobs:
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
       
-    - name: Build Release APK
-      run: ./gradlew assembleRelease --no-daemon --stacktrace
+    - name: Build Debug APK
+      run: ./gradlew assembleDebug --no-daemon --stacktrace
       
     - name: Get APK path and version
       id: apk-info
       run: |
-        APK_PATH=$(find app/build/outputs/apk/release -name "*.apk" | head -1)
+        # Debug: List all APK files
+        echo "Listing all APK files in debug directory:"
+        ls -la app/build/outputs/apk/debug/ || echo "Debug directory not found"
+        
+        # Find the debug APK
+        APK_PATH=$(find app/build/outputs/apk/debug -name "*.apk" | head -1)
+        echo "Found APK at: $APK_PATH"
+        
+        if [ -z "$APK_PATH" ]; then
+          echo "Error: No APK found in debug directory"
+          exit 1
+        fi
+        
         echo "apk_path=$APK_PATH" >> $GITHUB_OUTPUT
         
         # Extract version from build.gradle.kts (Kotlin syntax)
@@ -52,10 +64,28 @@ jobs:
     - name: Rename APK
       run: |
         APK_PATH="${{ steps.apk-info.outputs.apk_path }}"
-        NEW_APK_NAME="visident-${{ steps.apk-info.outputs.release_name }}-unsigned.apk"
-        NEW_APK_PATH="app/build/outputs/apk/release/${NEW_APK_NAME}"
+        echo "Original APK path: $APK_PATH"
+        
+        if [ -z "$APK_PATH" ] || [ ! -f "$APK_PATH" ]; then
+          echo "Error: APK file not found at $APK_PATH"
+          exit 1
+        fi
+        
+        NEW_APK_NAME="visident-${{ steps.apk-info.outputs.release_name }}-debug.apk"
+        NEW_APK_PATH="app/build/outputs/apk/debug/${NEW_APK_NAME}"
+        
+        echo "Renaming APK to: $NEW_APK_NAME"
+        echo "New path will be: $NEW_APK_PATH"
+        
         mv "$APK_PATH" "$NEW_APK_PATH"
-        echo "renamed_apk_path=$NEW_APK_PATH" >> $GITHUB_OUTPUT
+        
+        if [ -f "$NEW_APK_PATH" ]; then
+          echo "APK successfully renamed"
+          echo "renamed_apk_path=$NEW_APK_PATH" >> $GITHUB_OUTPUT
+        else
+          echo "Error: Failed to rename APK"
+          exit 1
+        fi
       id: rename-apk
         
     - name: Create Release
@@ -68,7 +98,7 @@ jobs:
           ## Visident Release ${{ steps.apk-info.outputs.release_name }}
           
           ### What's included:
-          - Unsigned release APK
+          - Debug APK (signed for development/testing)
           - Version: ${{ steps.apk-info.outputs.version_name }}
           - Build: ${{ steps.apk-info.outputs.version_code }}
           
