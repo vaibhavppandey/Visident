@@ -131,7 +131,7 @@ fun EndSessionScreen(
                                 imageCount = pictureCount,
                                 onComplete = {
                                     isLoading = false
-                                    Toast.makeText(context, "Session saved!", Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(context, "Session saved successfully", Toast.LENGTH_SHORT).show()
                                     onNavigateToStart()
                                 }
                             )

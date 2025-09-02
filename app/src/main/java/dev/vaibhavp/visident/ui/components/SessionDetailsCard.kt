@@ -1,5 +1,6 @@
 package dev.vaibhavp.visident.ui.components
 
+import android.content.res.Configuration
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowForward
@@ -11,6 +12,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import dev.vaibhavp.visident.data.model.SessionEntity
 import dev.vaibhavp.visident.ui.theme.VisidentTheme
+import timber.log.Timber
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -85,7 +87,7 @@ private fun Long.toDateString(): String {
     return formatter.format(date)
 }
 
-@Preview
+@Preview(uiMode = Configuration.UI_MODE_NIGHT_YES)
 @Composable
 fun SessionDetailsCardPreview() {
     val session = SessionEntity(
@@ -99,7 +101,7 @@ fun SessionDetailsCardPreview() {
         SessionDetailsCard(
             session = session,
             onNavigateClick = { sessionId ->
-                println("Navigate to details of session $sessionId")
+                Timber.wtf("Navigate to details of session $sessionId")
             }
         )
     }

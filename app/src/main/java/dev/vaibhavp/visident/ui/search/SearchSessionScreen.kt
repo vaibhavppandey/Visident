@@ -1,7 +1,7 @@
 package dev.vaibhavp.visident.ui.search
 
-import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -18,7 +18,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -39,7 +38,7 @@ fun SearchSessionScreen(
     val filteredSessions by viewModel.filteredSessions.collectAsStateWithLifecycle()
 
     LaunchedEffect(Unit) {
-
+        viewModel.getAllSessions()
     }
 
     Scaffold(
@@ -56,7 +55,6 @@ fun SearchSessionScreen(
                 .padding(16.dp)
                 .fillMaxSize(),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             OutlinedTextField(
                 shape = CircleShape,
@@ -67,26 +65,33 @@ fun SearchSessionScreen(
                 singleLine = true
             )
 
-            if (filteredSessions.isEmpty()) {
-                Text(
-                    text = if (searchQuery.isBlank() && viewModel.filteredSessions.collectAsState().value.isEmpty())
-                        "No sessions found."
-                    else
-                        "No sessions match your search.",
-                    style = MaterialTheme.typography.bodyLarge,
-                    modifier = Modifier.padding(top = 16.dp)
-                )
-            } else {
-                LazyColumn(
-                    modifier = Modifier.fillMaxWidth(),
-                    contentPadding = PaddingValues(vertical = 8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    items(filteredSessions, key = { it.sessionId }) { session ->
-                        SessionDetailsCard(
-                            session = session,
-                            onNavigateClick = { onNavigateToSessionDetails(session.sessionId) }
-                        )
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f)
+                    .padding(top = 16.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                if (filteredSessions.isEmpty()) {
+                    Text(
+                        text = if (searchQuery.isBlank())
+                            "No sessions found. Start by creating a new session!"
+                        else
+                            "No sessions match your search.",
+                        style = MaterialTheme.typography.bodyLarge,
+                    )
+                } else {
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(vertical = 8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        items(filteredSessions, key = { it.sessionId }) { session ->
+                            SessionDetailsCard(
+                                session = session,
+                                onNavigateClick = onNavigateToSessionDetails
+                            )
+                        }
                     }
                 }
             }

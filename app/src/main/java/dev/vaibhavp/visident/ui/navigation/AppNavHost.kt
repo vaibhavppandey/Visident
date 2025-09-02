@@ -6,10 +6,12 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.toRoute
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import dev.vaibhavp.visident.ui.search.SearchSessionScreen
 import dev.vaibhavp.visident.ui.session.CameraCaptureScreen
 import dev.vaibhavp.visident.ui.session.EndSessionScreen
+import dev.vaibhavp.visident.ui.session.SessionDetailScreen
 import dev.vaibhavp.visident.ui.session.StartSessionScreen
 import dev.vaibhavp.visident.viewmodel.SessionViewModel
 
@@ -30,13 +32,15 @@ fun VisidentNavHost(navController: NavHostController) {
 
         composable<SearchSessionsRoute> {
             SearchSessionScreen(
-                viewModel = viewModel
+                viewModel = viewModel,
+                onNavigateToSessionDetails = { id ->
+                   navController.navigate(SessionDetailsRoute(id  ))
+                }
             )
         }
 
         composable<CameraCaptureRoute> {
-            CameraCaptureScreen(
-                viewModel = viewModel,
+            CameraCaptureScreen( viewModel = viewModel,
                 onEndSessionClick = { navController.navigate(EndSessionRoute) }
             )
         }
@@ -52,6 +56,13 @@ fun VisidentNavHost(navController: NavHostController) {
                         launchSingleTop = true // @ top
                     }
                 }
+            )
+        }
+        composable<SessionDetailsRoute> {
+            val sessionID = it.toRoute<SessionDetailsRoute>().sessionID
+            SessionDetailScreen(
+                viewModel = viewModel,
+                sessionID = sessionID,
             )
         }
     }

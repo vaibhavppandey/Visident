@@ -15,4 +15,4 @@ object EndSessionRoute
 object SearchSessionsRoute
 
 @Serializable
-data class SessionDetailsRoute(val sessionId: String)
+data class SessionDetailsRoute(val sessionID: String)

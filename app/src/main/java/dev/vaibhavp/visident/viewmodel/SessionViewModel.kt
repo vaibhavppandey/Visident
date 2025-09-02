@@ -46,6 +46,19 @@ class SessionViewModel @Inject constructor(
     private val _filteredSessions = MutableStateFlow<List<SessionEntity>>(emptyList())
     val filteredSessions: StateFlow<List<SessionEntity>> = _filteredSessions
 
+    private val _selectedSession = MutableStateFlow<SessionEntity?>(null)
+    val selectedSession: StateFlow<SessionEntity?> = _selectedSession.asStateFlow()
+
+    private val _selectedSessionImages = MutableStateFlow<List<File>>(emptyList())
+    val selectedSessionImages: StateFlow<List<File>> = _selectedSessionImages.asStateFlow()
+
+    fun getSessionById(sessionId: String) {
+        viewModelScope.launch {
+            _selectedSession.value = repository.getSession(sessionId)
+            _selectedSessionImages.value = repository.getImagesForSession(sessionId)
+        }
+    }
+
     fun bindToCamera(appContext: Context, lifecycleOwner: LifecycleOwner) {
         viewModelScope.launch {
             val success = CameraUtility.bindCameraUseCases(
@@ -82,7 +95,7 @@ class SessionViewModel @Inject constructor(
         }
     }
 
-    fun loadAllSessions() {
+    fun getAllSessions() {
         viewModelScope.launch {
             _filteredSessions.value = repository.getAllSessions()
         }

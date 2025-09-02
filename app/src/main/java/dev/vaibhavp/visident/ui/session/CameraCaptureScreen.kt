@@ -5,12 +5,11 @@ import androidx.camera.core.SurfaceRequest
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -27,9 +26,13 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -52,16 +55,18 @@ fun CameraCaptureScreen(
     val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
     val context = LocalContext.current
 
+    var showCameraPermsDialogTrigger by remember { mutableStateOf(false) }
+
     LaunchedEffect(cameraPermissionState.status, lifecycleOwner, viewModel) {
         if (cameraPermissionState.status.isGranted) {
             viewModel.bindToCamera(context.applicationContext, lifecycleOwner)
         }
     }
 
-    Scaffold(modifier = modifier.fillMaxSize()) { padding ->
+    Scaffold(modifier = modifier.fillMaxSize()) { innerPadding ->
         Column(
             modifier = Modifier
-                .padding(padding)
+                .padding(innerPadding)
                 .fillMaxSize(),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
@@ -77,15 +82,29 @@ fun CameraCaptureScreen(
                     onEndSessionClicked = onEndSessionClick
                 )
             } else {
-                Box(modifier = Modifier.fillMaxSize()) {
-                    Text("Camera permission not granted.", Modifier.align(Alignment.Center))
+                Column(
+                    modifier = Modifier.padding(innerPadding),
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    Text(
+                        text = "Can't move forward w/out perms",
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.padding(horizontal = 32.dp) // Add some padding
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Button(onClick = { showCameraPermsDialogTrigger = true }) {
+                        Text("Okay")
+                    }
                 }
             }
         }
     }
 
-    if (!cameraPermissionState.status.isGranted) {
-        CameraPermsDialog(requestCameraPerms = { cameraPermissionState.launchPermissionRequest() })
+    if (showCameraPermsDialogTrigger && !cameraPermissionState.status.isGranted) {
+        CameraPermsDialog(
+            requestCameraPerms = { cameraPermissionState.launchPermissionRequest() },
+            { showCameraPermsDialogTrigger = false })
     }
 }
 
@@ -123,24 +142,22 @@ fun CameraPreviewContent(
             }
         }
 
-        Row(
+        ElevatedButton(
+            onClick = onTakePicture,
             modifier = Modifier
                 .align(Alignment.BottomCenter)
-                .padding(bottom = 32.dp),
-            horizontalArrangement = Arrangement.Center,
-            verticalAlignment = Alignment.CenterVertically
+                .padding(bottom = 32.dp)
         ) {
-            ElevatedButton(
-                onClick = onTakePicture,
-            ) {
-                Icon(Icons.Filled.Add, contentDescription = "Capture Photo")
-            }
-            Spacer(modifier = Modifier.width(8.dp))
-            ElevatedButton(
-                onClick = onEndSessionClicked,
-            ) {
-                Text("End Session")
-            }
+            Icon(Icons.Filled.Add, contentDescription = "Capture Photo")
+        }
+
+        ElevatedButton(
+            onClick = onEndSessionClicked,
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(bottom = 32.dp, end = 32.dp)
+        ) {
+            Text("End Session")
         }
     }
 }
@@ -149,9 +166,9 @@ fun CameraPreviewContent(
 @ExperimentalPermissionsApi
 @ExperimentalMaterial3Api
 @Composable
-fun CameraPermsDialog(requestCameraPerms: () -> Unit) {
+fun CameraPermsDialog(requestCameraPerms: () -> Unit, onDismissDialog: () -> Unit) {
     AlertDialog(
-        onDismissRequest = { /* TODO: Decide if dismissible and what happens */ },
+        onDismissRequest = onDismissDialog,
         icon = { Icon(Icons.Rounded.Warning, contentDescription = "Camera permission needed") },
         title = { Text(text = "Camera Permission") },
         text = { Text(text = "Visident needs camera permission to capture images for analysis.") },
@@ -169,7 +186,7 @@ fun CameraPermsDialog(requestCameraPerms: () -> Unit) {
 fun CameraPreviewContentPreview() {
     VisidentTheme {
         CameraPreviewContent(
-            surfaceRequest = null, // Or a mock SurfaceRequest if possible for preview
+            surfaceRequest = null,
             pictureCount = 5,
             onTakePicture = {},
             onEndSessionClicked = {}

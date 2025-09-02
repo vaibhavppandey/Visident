@@ -2,7 +2,6 @@ package dev.vaibhavp.visident.util
 
 import android.content.Context
 import android.net.Uri
-import android.util.Log
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageCapture
 import androidx.camera.core.ImageCaptureException
@@ -13,10 +12,12 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.LifecycleOwner
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import timber.log.Timber
 import java.io.File
-import java.util.UUID
 
 object CameraUtility {
+
+    private val timber = Timber.tag("CameraUtility")
 
     suspend fun bindCameraUseCases(
         context: Context,
@@ -37,7 +38,7 @@ object CameraUtility {
                 )
                 true
             } catch (exc: Exception) {
-                Log.e("CameraUtility", "Use case binding failed", exc)
+                timber.e(exc, "Use case binding failed")
                 false
             }
         }
@@ -59,13 +60,13 @@ object CameraUtility {
             ContextCompat.getMainExecutor(context),
             object : ImageCapture.OnImageSavedCallback {
                 override fun onError(exc: ImageCaptureException) {
-                    Log.e("CameraUtility", "Photo capture failed: ${exc.message}", exc)
+                    timber.e(exc, "Photo capture failed: ${exc.message}")
                     onError(exc)
                 }
 
                 override fun onImageSaved(output: ImageCapture.OutputFileResults) {
                     val savedUri = Uri.fromFile(outputFile)
-                    Log.d("CameraUtility", "Photo capture succeeded: $savedUri")
+                    timber.d( "Photo capture succeeded: $savedUri")
                     onImageSaved(savedUri)
                 }
             }
