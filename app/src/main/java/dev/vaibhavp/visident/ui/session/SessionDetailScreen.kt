@@ -13,7 +13,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -151,8 +151,7 @@ fun SessionDetailScreen(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
-                        items(images) { imageFile ->
-                            val index = images.indexOf(imageFile)
+                        itemsIndexed(images, key = { _, file -> file.path }) { index, imageFile ->
                             AsyncImage(
                                 model = imageFile,
                                 contentDescription = "Session image ${index + 1}",
@@ -252,14 +251,20 @@ private fun FullScreenImageViewer(
                 .fillMaxSize()
                 .clip(RoundedCornerShape(16.dp)),
         ) {
+            var zoomed by remember { mutableStateOf(false) }
             val pagerState = rememberPagerState(
                 initialPage = startIndex.coerceIn(0, (images.size - 1).coerceAtLeast(0)),
                 pageCount = { images.size },
             )
-            HorizontalPager(state = pagerState, modifier = Modifier.fillMaxSize()) { page ->
+            HorizontalPager(
+                state = pagerState,
+                userScrollEnabled = !zoomed,
+                modifier = Modifier.fillMaxSize(),
+            ) { page ->
                 ZoomableImage(
                     painter = rememberAsyncImagePainter(model = images[page]),
                     contentDescription = "Image ${page + 1}",
+                    onZoomChange = { zoomed = it },
                 )
             }
             IconButton(

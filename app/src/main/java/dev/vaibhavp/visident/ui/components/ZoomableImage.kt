@@ -28,6 +28,7 @@ fun ZoomableImage(
     modifier: Modifier = Modifier,
     minScale: Float = 1f,
     maxScale: Float = 5f,
+    onZoomChange: (isZoomed: Boolean) -> Unit = {},
 ) {
     var scale by remember { mutableFloatStateOf(1f) }
     var offset by remember { mutableStateOf(Offset.Zero) }
@@ -37,8 +38,10 @@ fun ZoomableImage(
             .fillMaxSize()
             .pointerInput(Unit) {
                 detectTransformGestures { _, pan, zoom, _ ->
-                    scale = (scale * zoom).coerceIn(minScale, maxScale)
-                    offset = if (scale == 1f) Offset.Zero else offset + pan
+                    val newScale = (scale * zoom).coerceIn(minScale, maxScale)
+                    scale = newScale
+                    offset = if (newScale == 1f) Offset.Zero else offset + pan
+                    onZoomChange(newScale > 1f)
                 }
             },
     ) {
