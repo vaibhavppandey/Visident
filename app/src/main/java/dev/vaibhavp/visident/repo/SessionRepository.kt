@@ -5,7 +5,9 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import dev.vaibhavp.visident.data.db.SessionDao
 import dev.vaibhavp.visident.data.model.SessionEntity
 import dev.vaibhavp.visident.util.FileUtils
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.withContext
 import java.io.File
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -19,7 +21,7 @@ class SessionRepository @Inject constructor(
 
     suspend fun saveSession(session: SessionEntity) {
         dao.insertSession(session)
-        FileUtils.createSessionFolder(context, session.sessionId)
+        withContext(Dispatchers.IO) { FileUtils.createSessionFolder(context, session.sessionId) }
     }
 
     suspend fun updateSession(session: SessionEntity) = dao.updateSession(session)
@@ -27,7 +29,7 @@ class SessionRepository @Inject constructor(
     /** Deletes the session row and its image folder together. */
     suspend fun deleteSession(session: SessionEntity) {
         dao.deleteSession(session)
-        FileUtils.deleteSessionFolder(context, session.sessionId)
+        withContext(Dispatchers.IO) { FileUtils.deleteSessionFolder(context, session.sessionId) }
     }
 
     suspend fun getSession(id: String): SessionEntity? = dao.getSessionById(id)
@@ -36,15 +38,16 @@ class SessionRepository @Inject constructor(
 
     fun searchSessions(query: String): Flow<List<SessionEntity>> = dao.searchSessions(query)
 
-    fun getImagesForSession(sessionId: String): List<File> =
-        FileUtils.getSessionImages(context, sessionId)
+    suspend fun getImagesForSession(sessionId: String): List<File> =
+        withContext(Dispatchers.IO) { FileUtils.getSessionImages(context, sessionId) }
 
-    fun moveCachedImagesToSession(sessionId: String) =
-        FileUtils.moveCachedImagesToSession(context, sessionId)
+    suspend fun moveCachedImagesToSession(sessionId: String) =
+        withContext(Dispatchers.IO) { FileUtils.moveCachedImagesToSession(context, sessionId) }
 
-    fun createTempImageFile(): File = FileUtils.createTempImageFile(context)
+    suspend fun createTempImageFile(): File =
+        withContext(Dispatchers.IO) { FileUtils.createTempImageFile(context) }
 
-    fun clearCache() = FileUtils.clearCache(context)
+    suspend fun clearCache() = withContext(Dispatchers.IO) { FileUtils.clearCache(context) }
 
     // Retained for the legacy SessionViewModel; removed in Phase 3.
     suspend fun getAllSessions(): List<SessionEntity> = dao.getAllSessions()

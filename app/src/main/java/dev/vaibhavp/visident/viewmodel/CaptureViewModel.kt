@@ -3,7 +3,6 @@ package dev.vaibhavp.visident.viewmodel
 import android.content.Context
 import androidx.camera.core.Camera
 import androidx.camera.core.CameraControl
-import androidx.camera.core.CameraInfo
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.FocusMeteringAction
 import androidx.camera.core.ImageCapture
@@ -59,9 +58,8 @@ class CaptureViewModel @Inject constructor(
     private val _captureError = MutableSharedFlow<String>(extraBufferCapacity = 1)
     val captureError: SharedFlow<String> = _captureError.asSharedFlow()
 
-    private var cameraControl: CameraControl? = null
-    private var cameraInfo: CameraInfo? = null
-    private var meteringPointFactory: SurfaceOrientedMeteringPointFactory? = null
+    @Volatile private var cameraControl: CameraControl? = null
+    @Volatile private var meteringPointFactory: SurfaceOrientedMeteringPointFactory? = null
 
     private val imageCapture: ImageCapture = ImageCapture.Builder()
         .setCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY)
@@ -102,7 +100,6 @@ class CaptureViewModel @Inject constructor(
                 imageCapture,
             )
             cameraControl = camera.cameraControl
-            cameraInfo = camera.cameraInfo
             _hasFlashUnit.value = camera.cameraInfo.hasFlashUnit()
             applyFlashMode()
             awaitCancellation()
@@ -114,7 +111,6 @@ class CaptureViewModel @Inject constructor(
         } finally {
             provider.unbindAll()
             cameraControl = null
-            cameraInfo = null
         }
     }
 
