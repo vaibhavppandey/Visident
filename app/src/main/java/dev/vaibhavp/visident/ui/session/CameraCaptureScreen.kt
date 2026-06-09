@@ -1,7 +1,11 @@
 package dev.vaibhavp.visident.ui.session
 
+import android.content.Intent
+import android.net.Uri
+import android.provider.Settings
 import androidx.camera.compose.CameraXViewfinder
-import androidx.camera.core.SurfaceRequest
+import androidx.camera.viewfinder.compose.MutableCoordinateTransformer
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -12,17 +16,21 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Cameraswitch
+import androidx.compose.material.icons.filled.FlashOff
+import androidx.compose.material.icons.filled.FlashOn
+import androidx.compose.material.icons.filled.PhotoCamera
 import androidx.compose.material.icons.rounded.Warning
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
-import androidx.compose.material3.ElevatedButton
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.LargeFloatingActionButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -31,175 +39,207 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.google.accompanist.permissions.ExperimentalPermissionsApi
-import com.google.accompanist.permissions.isGranted
+import com.google.accompanist.permissions.PermissionStatus
 import com.google.accompanist.permissions.rememberPermissionState
-import dev.vaibhavp.visident.ui.theme.VisidentTheme
-import dev.vaibhavp.visident.viewmodel.SessionViewModel
+import dev.vaibhavp.visident.viewmodel.CaptureViewModel
+import kotlinx.coroutines.flow.collectLatest
 
-@ExperimentalMaterial3Api
-@ExperimentalPermissionsApi
 @Composable
 fun CameraCaptureScreen(
+    viewModel: CaptureViewModel,
+    onBack: () -> Unit,
+    onEndSessionClick: () -> Unit,
     modifier: Modifier = Modifier,
-    viewModel: SessionViewModel = hiltViewModel<SessionViewModel>(),
-    onEndSessionClick: () -> Unit = {}
 ) {
-    val cameraPermissionState = rememberPermissionState(android.Manifest.permission.CAMERA)
-    val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
     val context = LocalContext.current
-
-    var showCameraPermsDialogTrigger by remember { mutableStateOf(false) }
-
-    LaunchedEffect(cameraPermissionState.status, lifecycleOwner, viewModel) {
-        if (cameraPermissionState.status.isGranted) {
-            viewModel.bindToCamera(context.applicationContext, lifecycleOwner)
-        }
-    }
+    var hasRequested by remember { mutableStateOf(false) }
+    val cameraPermissionState = rememberPermissionState(
+        android.Manifest.permission.CAMERA,
+        onPermissionResult = { hasRequested = true },
+    )
+    val status = cameraPermissionState.status
 
     Scaffold(modifier = modifier.fillMaxSize()) { innerPadding ->
-        Column(
+        Box(
             modifier = Modifier
-                .padding(innerPadding)
-                .fillMaxSize(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+                .fillMaxSize()
+                .padding(innerPadding),
         ) {
-            if (cameraPermissionState.status.isGranted) {
-                val surfaceRequest by viewModel.surfaceRequest.collectAsStateWithLifecycle()
-                val pictureCount by viewModel.pictureCount.collectAsStateWithLifecycle()
-                CameraPreviewContent(
-                    modifier = Modifier.weight(1f),
-                    surfaceRequest = surfaceRequest,
-                    pictureCount = pictureCount,
-                    onTakePicture = { viewModel.takePicture(context) },
-                    onEndSessionClicked = onEndSessionClick
-                )
-            } else {
-                Column(
-                    modifier = Modifier.padding(innerPadding),
-                    verticalArrangement = Arrangement.Center,
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                ) {
-                    Text(
-                        text = "Can't move forward w/out perms",
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.padding(horizontal = 32.dp) // Add some padding
+            when {
+                status is PermissionStatus.Granted ->
+                    CameraContent(
+                        viewModel = viewModel,
+                        onBack = onBack,
+                        onEndSessionClick = onEndSessionClick,
                     )
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Button(onClick = { showCameraPermsDialogTrigger = true }) {
-                        Text("Okay")
-                    }
-                }
+
+                status is PermissionStatus.Denied && status.shouldShowRationale ->
+                    PermissionRationale(
+                        message = "Visident needs the camera to capture session photos.",
+                        actionLabel = "Grant permission",
+                        onAction = { cameraPermissionState.launchPermissionRequest() },
+                    )
+
+                !hasRequested ->
+                    PermissionRationale(
+                        message = "Camera access is required to start a session.",
+                        actionLabel = "Request permission",
+                        onAction = { cameraPermissionState.launchPermissionRequest() },
+                    )
+
+                else ->
+                    // Permanently denied: only the system Settings page can re-grant it.
+                    PermissionRationale(
+                        message = "Camera permission is permanently denied. Enable it in Settings to continue.",
+                        actionLabel = "Open Settings",
+                        onAction = {
+                            context.startActivity(
+                                Intent(
+                                    Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                                    Uri.fromParts("package", context.packageName, null),
+                                ).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+                            )
+                        },
+                    )
             }
         }
     }
-
-    if (showCameraPermsDialogTrigger && !cameraPermissionState.status.isGranted) {
-        CameraPermsDialog(
-            requestCameraPerms = { cameraPermissionState.launchPermissionRequest() },
-            { showCameraPermsDialogTrigger = false })
-    }
 }
 
-@ExperimentalMaterial3Api
 @Composable
-fun CameraPreviewContent(
-    modifier: Modifier = Modifier,
-    surfaceRequest: SurfaceRequest?,
-    pictureCount: Int,
-    onTakePicture: () -> Unit,
-    onEndSessionClicked: () -> Unit
+private fun CameraContent(
+    viewModel: CaptureViewModel,
+    onBack: () -> Unit,
+    onEndSessionClick: () -> Unit,
 ) {
-    Box(modifier = modifier.fillMaxSize()) {
+    val context = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
+    val surfaceRequest by viewModel.surfaceRequest.collectAsStateWithLifecycle()
+    val pictureCount by viewModel.pictureCount.collectAsStateWithLifecycle()
+    val flashEnabled by viewModel.flashEnabled.collectAsStateWithLifecycle()
+    val hasFlashUnit by viewModel.hasFlashUnit.collectAsStateWithLifecycle()
+    val lensFacing by viewModel.lensFacing.collectAsStateWithLifecycle()
+
+    // Rebind whenever the lens changes; the binding suspends until this effect is cancelled.
+    LaunchedEffect(lensFacing) {
+        viewModel.bindToCamera(context.applicationContext, lifecycleOwner)
+    }
+    // Surface one-off capture errors as a toast.
+    LaunchedEffect(Unit) {
+        viewModel.captureError.collectLatest { message ->
+            android.widget.Toast.makeText(context, message, android.widget.Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    Box(modifier = Modifier.fillMaxSize()) {
+        val coordinateTransformer = remember { MutableCoordinateTransformer() }
         surfaceRequest?.let { request ->
             CameraXViewfinder(
                 surfaceRequest = request,
-                modifier = Modifier.fillMaxSize()
+                coordinateTransformer = coordinateTransformer,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .pointerInput(Unit) {
+                        detectTapGestures { tap ->
+                            with(coordinateTransformer) { viewModel.focusOnPoint(tap.transform()) }
+                        }
+                    },
             )
         }
 
+        TopAppBar(
+            title = {},
+            navigationIcon = {
+                IconButton(onClick = onBack) {
+                    Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back")
+                }
+            },
+            actions = {
+                if (hasFlashUnit) {
+                    IconButton(onClick = { viewModel.toggleFlash() }) {
+                        Icon(
+                            if (flashEnabled) Icons.Filled.FlashOn else Icons.Filled.FlashOff,
+                            contentDescription = if (flashEnabled) "Flash on" else "Flash off",
+                        )
+                    }
+                }
+                IconButton(onClick = { viewModel.toggleLens() }) {
+                    Icon(Icons.Filled.Cameraswitch, "Switch camera")
+                }
+            },
+        )
+
+        // Photo counter badge.
         Surface(
             shape = CircleShape,
+            color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.85f),
             modifier = Modifier
                 .align(Alignment.TopEnd)
-                .padding(16.dp)
-                .size(48.dp),
-            color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.75f)
+                .padding(top = 72.dp, end = 16.dp)
+                .size(44.dp),
         ) {
-            Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
+            Box(contentAlignment = Alignment.Center) {
                 Text(
                     text = "$pictureCount",
                     style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSecondaryContainer
+                    color = MaterialTheme.colorScheme.onSecondaryContainer,
                 )
             }
         }
 
-        ElevatedButton(
-            onClick = onTakePicture,
+        // Capture (center) + end-session (right) controls.
+        Box(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
-                .padding(bottom = 32.dp)
+                .fillMaxSize()
+                .padding(bottom = 36.dp),
         ) {
-            Icon(Icons.Filled.Add, contentDescription = "Capture Photo")
-        }
-
-        ElevatedButton(
-            onClick = onEndSessionClicked,
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(bottom = 32.dp, end = 32.dp)
-        ) {
-            Text("End Session")
-        }
-    }
-}
-
-
-@ExperimentalPermissionsApi
-@ExperimentalMaterial3Api
-@Composable
-fun CameraPermsDialog(requestCameraPerms: () -> Unit, onDismissDialog: () -> Unit) {
-    AlertDialog(
-        onDismissRequest = onDismissDialog,
-        icon = { Icon(Icons.Rounded.Warning, contentDescription = "Camera permission needed") },
-        title = { Text(text = "Camera Permission") },
-        text = { Text(text = "Visident needs camera permission to capture images for analysis.") },
-        confirmButton = {
-            Button(onClick = requestCameraPerms) {
-                Text("Grant Permission")
+            LargeFloatingActionButton(
+                onClick = { viewModel.takePicture(context) },
+                modifier = Modifier.align(Alignment.BottomCenter),
+            ) {
+                Icon(Icons.Filled.PhotoCamera, "Capture photo", Modifier.size(36.dp))
             }
-        },
-    )
-}
-
-@Preview(showBackground = true)
-@Composable
-@ExperimentalMaterial3Api
-fun CameraPreviewContentPreview() {
-    VisidentTheme {
-        CameraPreviewContent(
-            surfaceRequest = null,
-            pictureCount = 5,
-            onTakePicture = {},
-            onEndSessionClicked = {}
-        )
+            Button(
+                onClick = onEndSessionClick,
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(end = 24.dp),
+            ) {
+                Text("End session")
+            }
+        }
     }
 }
 
-@Preview(showBackground = true)
 @Composable
-@ExperimentalPermissionsApi
-@ExperimentalMaterial3Api
-fun CameraCaptureScreenPreview() {
-    VisidentTheme {
-        CameraCaptureScreen(onEndSessionClick = {})
+private fun PermissionRationale(
+    message: String,
+    actionLabel: String,
+    onAction: () -> Unit,
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(32.dp),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Icon(
+            Icons.Rounded.Warning,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.size(48.dp),
+        )
+        Spacer(Modifier.height(16.dp))
+        Text(message, textAlign = TextAlign.Center, style = MaterialTheme.typography.bodyLarge)
+        Spacer(Modifier.height(24.dp))
+        Button(onClick = onAction) { Text(actionLabel) }
     }
 }

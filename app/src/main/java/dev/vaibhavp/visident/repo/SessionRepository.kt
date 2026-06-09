@@ -48,7 +48,4 @@ class SessionRepository @Inject constructor(
         withContext(Dispatchers.IO) { FileUtils.createTempImageFile(context) }
 
     suspend fun clearCache() = withContext(Dispatchers.IO) { FileUtils.clearCache(context) }
-
-    // Retained for the legacy SessionViewModel; removed in Phase 3.
-    suspend fun getAllSessions(): List<SessionEntity> = dao.getAllSessions()
 }

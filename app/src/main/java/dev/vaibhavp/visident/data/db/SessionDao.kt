@@ -35,8 +35,4 @@ interface SessionDao {
             "ORDER BY createdAt DESC",
     )
     fun searchSessions(query: String): Flow<List<SessionEntity>>
-
-    // Retained only for the legacy SessionViewModel; removed in Phase 3 once screens use Flows.
-    @Query("SELECT * FROM sessions ORDER BY createdAt DESC")
-    suspend fun getAllSessions(): List<SessionEntity>
 }

@@ -1,108 +1,93 @@
 package dev.vaibhavp.visident.ui.components
 
-import android.content.res.Configuration
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.ArrowForward
-import androidx.compose.material3.*
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import dev.vaibhavp.visident.data.model.SessionEntity
 import dev.vaibhavp.visident.ui.theme.VisidentTheme
-import timber.log.Timber
+import androidx.compose.ui.tooling.preview.Preview
 import java.text.SimpleDateFormat
-import java.util.*
+import java.util.Date
+import java.util.Locale
 
 @Composable
 fun SessionDetailsCard(
     session: SessionEntity,
+    onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    onNavigateClick: (String) -> Unit
 ) {
     Card(
+        onClick = onClick,
         modifier = modifier
             .fillMaxWidth()
-            .padding(8.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+            .padding(vertical = 6.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
     ) {
         Column(
             modifier = Modifier
-                .padding(16.dp)
-                .fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
             ) {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("Session ID", style = MaterialTheme.typography.bodyMedium)
-                    Text("Name", style = MaterialTheme.typography.bodyMedium)
-                    Text("Age", style = MaterialTheme.typography.bodyMedium)
-                }
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(session.sessionId, style = MaterialTheme.typography.bodyMedium)
-                    Text(session.name, style = MaterialTheme.typography.bodyMedium)
-                    Text(session.age.toString(), style = MaterialTheme.typography.bodyMedium)
-                }
+                Text(session.name, style = MaterialTheme.typography.titleMedium)
+                Icon(
+                    Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                    contentDescription = "View details",
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
             }
-
+            Text(
+                "Age ${session.age} · ID ${session.sessionId.take(8)}…",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
             HorizontalDivider()
-
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
             ) {
-                Column {
-                    Text(
-                        "Images: ${session.imageCount}",
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        "Created: ${session.createdAt.toDateString()}",
-                        style = MaterialTheme.typography.bodySmall
-                    )
-                }
-
-//                 Spacer(modifier = Modifier.weight(1f)) // button = far end
-
-                Button(
-                    onClick = { onNavigateClick(session.sessionId) }
-                ) {
-                    Icon(Icons.AutoMirrored.Rounded.ArrowForward, contentDescription = "View Details")
-                }
+                Text("${session.imageCount} photos", style = MaterialTheme.typography.bodySmall)
+                Text(session.createdAt.toDateString(), style = MaterialTheme.typography.bodySmall)
             }
         }
     }
 }
 
-private fun Long.toDateString(): String {
-    val date = Date(this)
-    val formatter = SimpleDateFormat("dd MMM yyyy, HH:mm", Locale.getDefault())
-    return formatter.format(date)
-}
+private fun Long.toDateString(): String =
+    SimpleDateFormat("dd MMM yyyy, HH:mm", Locale.getDefault()).format(Date(this))
 
-@Preview(uiMode = Configuration.UI_MODE_NIGHT_YES)
+@Preview
 @Composable
-fun SessionDetailsCardPreview() {
-    val session = SessionEntity(
-        sessionId = "12345",
-        name = "John Doe",
-        age = 30,
-        createdAt = System.currentTimeMillis(),
-        imageCount = 5
-    )
+private fun SessionDetailsCardPreview() {
     VisidentTheme {
         SessionDetailsCard(
-            session = session,
-            onNavigateClick = { sessionId ->
-                Timber.wtf("Navigate to details of session $sessionId")
-            }
+            session = SessionEntity(
+                sessionId = "12345678-abcd",
+                name = "John Doe",
+                age = 30,
+                createdAt = 1_733_000_000_000L,
+                imageCount = 5,
+            ),
+            onClick = {},
         )
     }
 }

@@ -5,6 +5,10 @@ import kotlinx.serialization.Serializable
 @Serializable
 object StartSessionRoute
 
+/** Parent graph for the capture flow so Camera + EndSession share one CaptureViewModel. */
+@Serializable
+object CaptureGraph
+
 @Serializable
 object CameraCaptureRoute
 

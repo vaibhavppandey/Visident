@@ -1,70 +1,77 @@
 package dev.vaibhavp.visident.ui.navigation
 
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.navigation
 import androidx.navigation.toRoute
-import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import dev.vaibhavp.visident.ui.search.SearchSessionScreen
 import dev.vaibhavp.visident.ui.session.CameraCaptureScreen
 import dev.vaibhavp.visident.ui.session.EndSessionScreen
 import dev.vaibhavp.visident.ui.session.SessionDetailScreen
 import dev.vaibhavp.visident.ui.session.StartSessionScreen
-import dev.vaibhavp.visident.viewmodel.SessionViewModel
+import dev.vaibhavp.visident.viewmodel.CaptureViewModel
 
-@ExperimentalMaterial3Api
-@ExperimentalPermissionsApi
 @Composable
 fun VisidentNavHost(navController: NavHostController) {
-    // TODO: migrate to hilt nav later on
-    val viewModel = hiltViewModel<SessionViewModel>()
     NavHost(navController = navController, startDestination = StartSessionRoute) {
         composable<StartSessionRoute> {
             StartSessionScreen(
-                onStartNewSessionClick = { navController.navigate(CameraCaptureRoute) },
-                onSearchSessionClick = { navController.navigate(SearchSessionsRoute) }
-
+                onStartNewSessionClick = { navController.navigate(CaptureGraph) },
+                onSearchSessionClick = { navController.navigate(SearchSessionsRoute) },
             )
+        }
+
+        navigation<CaptureGraph>(startDestination = CameraCaptureRoute) {
+            composable<CameraCaptureRoute> { entry ->
+                CameraCaptureScreen(
+                    viewModel = entry.captureGraphViewModel(navController),
+                    onBack = { navController.popBackStack() },
+                    onEndSessionClick = { navController.navigate(EndSessionRoute) },
+                )
+            }
+            composable<EndSessionRoute> { entry ->
+                EndSessionScreen(
+                    viewModel = entry.captureGraphViewModel(navController),
+                    onBack = { navController.popBackStack() },
+                    onNavigateToStart = {
+                        navController.navigate(StartSessionRoute) {
+                            // Clear the capture flow off the back stack after saving.
+                            popUpTo(StartSessionRoute) { inclusive = true }
+                            launchSingleTop = true
+                        }
+                    },
+                )
+            }
         }
 
         composable<SearchSessionsRoute> {
             SearchSessionScreen(
-                viewModel = viewModel,
-                onNavigateToSessionDetails = { id ->
-                   navController.navigate(SessionDetailsRoute(id  ))
-                }
+                viewModel = hiltViewModel(),
+                onBack = { navController.popBackStack() },
+                onNavigateToSessionDetails = { id -> navController.navigate(SessionDetailsRoute(id)) },
             )
         }
 
-        composable<CameraCaptureRoute> {
-            CameraCaptureScreen( viewModel = viewModel,
-                onEndSessionClick = { navController.navigate(EndSessionRoute) }
-            )
-        }
-
-        composable<EndSessionRoute> {
-            EndSessionScreen(
-                viewModel = viewModel,
-                onNavigateToStart = {
-                    navController.navigate(StartSessionRoute) {
-                        popUpTo(StartSessionRoute) {
-                            inclusive = true
-                        }
-                        launchSingleTop = true // @ top
-                    }
-                }
-            )
-        }
-        composable<SessionDetailsRoute> {
-            val sessionID = it.toRoute<SessionDetailsRoute>().sessionID
+        composable<SessionDetailsRoute> { entry ->
             SessionDetailScreen(
-                viewModel = viewModel,
-                sessionID = sessionID,
+                sessionID = entry.toRoute<SessionDetailsRoute>().sessionID,
+                viewModel = hiltViewModel(),
+                onBack = { navController.popBackStack() },
             )
         }
     }
 }
 
+/** One CaptureViewModel scoped to the whole capture sub-graph, shared by its screens. */
+@Composable
+private fun NavBackStackEntry.captureGraphViewModel(
+    navController: NavHostController,
+): CaptureViewModel {
+    val parentEntry = remember(this) { navController.getBackStackEntry(CaptureGraph) }
+    return hiltViewModel(parentEntry)
+}
