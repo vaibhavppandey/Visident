@@ -6,9 +6,9 @@
 
 **Architecture:** Single-module Compose app. Data: Room (reactive `Flow` DAO) → `SessionRepository` → two scoped Hilt ViewModels (`CaptureViewModel` for the camera sub-flow, `LibraryViewModel` for search/detail). UI: `MaterialExpressiveTheme` with a teal-seeded color scheme + dynamic color, expressive components per screen. Navigation: `navigation-compose` with a nested `CaptureGraph` so camera + end-session share one `CaptureViewModel`.
 
-**Tech Stack:** Kotlin 2.3.21, AGP 9.3.0 (Gradle 9.5.1), compileSdk/targetSdk 37, Compose 1.12.0-alpha03 + Material3 1.5.0-alpha21 (real Expressive), Room 2.8.4, Hilt 2.59.2, CameraX 1.6.1, Coil 3.4.0, Java 17.
+**Tech Stack:** Kotlin 2.3.21 (via AGP 9's built-in Kotlin), AGP 9.2.1 (Gradle 9.5.1), compileSdk/targetSdk 37, Compose 1.12.0-alpha03 + Material3 1.5.0-alpha21 (real Expressive), Room 2.8.4, Hilt 2.59.2, CameraX 1.6.1, Coil 3.4.0, Java 17.
 
-> **Dependency-strategy note (revised after Phase 0):** Real Material 3 Expressive APIs (MaterialExpressiveTheme, ButtonGroup, FAB menu, LoadingIndicator, flexible app bars, expressive button sizing) exist ONLY in `material3 1.5.0-alpha`, whose AAR metadata hard-requires AGP 9.1+ and compileSdk 37 (empirically verified — see Phase 0.5). The owner chose to go bleeding-edge for genuine Expressive. So Phase 0 lands the stable AGP-8 baseline, then **Phase 0.5 migrates the toolchain to AGP 9.3 / Gradle 9.5 / compileSdk 37 and Compose+Material3 onto alpha.** Only Compose + Material3 are on alpha; everything else is latest stable.
+> **Dependency-strategy note (revised after Phase 0):** Real Material 3 Expressive APIs (MaterialExpressiveTheme, ButtonGroup, FAB menu, LoadingIndicator, flexible app bars, expressive button sizing) exist ONLY in `material3 1.5.0-alpha`, whose AAR metadata hard-requires AGP 9.1+ and compileSdk 37 (empirically verified — see Phase 0.5). The owner chose to go bleeding-edge for genuine Expressive. So Phase 0 lands the stable AGP-8 baseline, then **Phase 0.5 migrates the toolchain to AGP 9.2.1 / Gradle 9.5 / compileSdk 37 and Compose+Material3 onto alpha.** Only Compose + Material3 are on alpha; everything else is latest stable.
 
 ---
 
@@ -328,8 +328,8 @@ git commit -m "build: bump deps to latest stable, drop Nav3/snapshot, migrate Co
 This phase migrates the toolchain so the actual M3 Expressive APIs become accessible. It is build-driven: alpha stacks need a few convergence iterations. The implementer should land the target versions below, then `./gradlew assembleDebug` and resolve residual conflicts by reading each AAR-metadata / DSL error.
 
 ## Target versions (verified against live Maven, 2026-06-09)
-- **AGP** `9.3.0`; **Gradle wrapper** `9.5.1` (`./gradlew wrapper --gradle-version 9.5.1`).
-- **compileSdk = 37**, **targetSdk = 37** (minSdk stays 26). Install the platform if missing: `~/Library/Android/sdk/cmdline-tools/latest/bin/sdkmanager "platforms;android-37"` (accept licenses).
+- **AGP** `9.2.1` (latest stable ≥9.1; the 9.3 line is alpha-only); **Gradle wrapper** `9.5.1` (`./gradlew wrapper --gradle-version 9.5.1`).
+- **compileSdk = 37**, **targetSdk = 37** (minSdk stays 26). Install the platform if missing — the package id is `platforms;android-37.0` (not `android-37`): `~/Library/Android/sdk/cmdline-tools/latest/bin/sdkmanager "platforms;android-37.0"` (accept licenses). AGP resolves `compileSdk = 37` to the installed `android-37.0`.
 - **Drop the Compose BOM** (no alpha BOM exists). Pin Compose explicitly:
   - Compose UI family (`ui`, `ui-graphics`, `ui-tooling`, `ui-tooling-preview`, `ui-test-manifest`, `ui-test-junit4`, `ui-text-google-fonts`) → `1.12.0-alpha03`.
   - `material3` → `1.5.0-alpha21`.
@@ -339,15 +339,17 @@ This phase migrates the toolchain so the actual M3 Expressive APIs become access
 - **Unchanged:** Kotlin 2.3.21, KSP 2.3.9, Room 2.8.4, CameraX 1.6.1, accompanist 0.37.3, navigation-compose 2.9.8, lifecycle 2.10.0, coil 3.4.0, activity 1.13.0, kotlinx-serialization 1.11.0, timber 5.0.1, Java 17.
 
 ## Known migration hazards to expect & handle
-- **JDK:** AGP 9.x may require JDK 21 to run Gradle. If the build errors on JDK version, use Android Studio's JBR: `JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home" ./gradlew ...` (its JBR is 21).
+- **AGP 9 has built-in Kotlin:** applying `org.jetbrains.kotlin.android` fails with "no longer required for Kotlin support since AGP 9.0." **Remove the `kotlin.android` plugin alias** from both `app/build.gradle.kts` and the root `build.gradle.kts`. Keep `kotlin.plugin.compose`, the `kotlin { compilerOptions { } }` block, and `kotlin.plugin.serialization` — they work with AGP's built-in Kotlin.
+- **JDK:** AGP 9.x needs JDK 21 to run Gradle. (On this machine the system default `java` is already Temurin 21, so no override is needed.) If a JDK-version error appears, point `JAVA_HOME` at any JDK 21.
 - **AGP 9 DSL:** `kotlinOptions` is already gone (we use `kotlin { compilerOptions { } }`). Watch for: `buildConfig` now off by default (we don't use BuildConfig), `android.nonTransitiveRClass` default true, any removed DSL. Fix per the error message; do not disable features we rely on.
 - **Version conflicts:** stable navigation-compose 2.9.8 / activity-compose 1.13.0 / lifecycle 2.10.0 pull stable Compose; Gradle should resolve up to the alpha `1.12.0-alpha03`. If a hard conflict appears, add the explicit alpha pin for that Compose artifact rather than downgrading material3.
 - **KSP/Hilt:** KSP 2.3.9 + Hilt 2.59.2 should work on AGP 9.3; if KSP errors on AGP 9, report it (do not silently downgrade Kotlin).
 
 ## Tasks
-- [ ] **0.5.1 — Install compileSdk 37** if absent: `~/Library/Android/sdk/cmdline-tools/latest/bin/sdkmanager "platforms;android-37"` (yes to licenses). Verify `~/Library/Android/sdk/platforms/android-37` exists.
+- [ ] **0.5.1 — Install compileSdk 37** if absent: `~/Library/Android/sdk/cmdline-tools/latest/bin/sdkmanager "platforms;android-37.0"` (yes to licenses). Verify `~/Library/Android/sdk/platforms/android-37.0` exists.
 - [ ] **0.5.2 — Bump the Gradle wrapper:** `./gradlew wrapper --gradle-version 9.5.1` (then a second run so the new wrapper takes effect).
-- [ ] **0.5.3 — Edit `gradle/libs.versions.toml`:** set `agp = "9.3.0"`, `coreKtx = "1.18.0"`→`"1.19.0"`, `hiltAndroid = "2.58"`→`"2.59.2"`; remove the `composeBom` version + the `androidx-compose-bom` library entry; add a `composeUi = "1.12.0-alpha03"` version and point every Compose UI library entry (`androidx-ui`, `androidx-ui-graphics`, `androidx-ui-tooling`, `androidx-ui-tooling-preview`, `androidx-ui-test-manifest`, `androidx-ui-test-junit4`, `androidx-ui-text-google-fonts`) at it with `version.ref = "composeUi"`; add `material3Version = "1.5.0-alpha21"` and point `androidx-material3` at it; give `androidx-material-icons-extended` `version = "1.7.8"`.
+- [ ] **0.5.2b — Remove the `kotlin.android` plugin alias** from `app/build.gradle.kts` and root `build.gradle.kts` (AGP 9 built-in Kotlin; see hazards).
+- [ ] **0.5.3 — Edit `gradle/libs.versions.toml`:** set `agp = "9.2.1"`, `coreKtx = "1.18.0"`→`"1.19.0"`, `hiltAndroid = "2.58"`→`"2.59.2"`; remove the `composeBom` version + the `androidx-compose-bom` library entry; add a `composeUi = "1.12.0-alpha03"` version and point every Compose UI library entry (`androidx-ui`, `androidx-ui-graphics`, `androidx-ui-tooling`, `androidx-ui-tooling-preview`, `androidx-ui-test-manifest`, `androidx-ui-test-junit4`, `androidx-ui-text-google-fonts`) at it with `version.ref = "composeUi"`; add `material3Version = "1.5.0-alpha21"` and point `androidx-material3` at it; give `androidx-material-icons-extended` `version = "1.7.8"`.
 - [ ] **0.5.4 — Edit `app/build.gradle.kts`:** `compileSdk = 37`, `targetSdk = 37`; remove both `implementation(platform(libs.androidx.compose.bom))` and `androidTestImplementation(platform(libs.androidx.compose.bom))` lines (the explicit versions now drive Compose).
 - [ ] **0.5.5 — Build to green:** `./gradlew assembleDebug` → `BUILD SUCCESSFUL`. Iterate on AAR-metadata / DSL / conflict errors per the hazards above. The app code is unchanged in this phase, so any failure is purely build/dependency configuration.
 - [ ] **0.5.6 — Commit:**
