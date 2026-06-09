@@ -81,7 +81,7 @@ Material3, Room 2.7.2, Hilt 2.57.1, CameraX 1.5.0-rc01, Coil 2.7.0, Java 11.
 | navigation-compose | 2.9.3 | 2.9.8 |
 | lifecycle (runtime-ktx / viewmodel-compose / runtime-compose) | 2.9.3 | 2.10.0 |
 | Coil | 2.7.0 (`io.coil-kt`) | 3.4.0 (`io.coil-kt.coil3`) |
-| core-ktx | 1.17.0 | 1.19.0 |
+| core-ktx | 1.17.0 | 1.18.0 (1.19 needs AGP 9.1/compileSdk 37) |
 | activity-compose | 1.10.1 | 1.13.0 |
 | kotlinx-serialization | 1.9.0 | 1.11.0 |
 | ui-text-google-fonts | 1.9.0 (explicit) | via BOM (drop explicit version) |

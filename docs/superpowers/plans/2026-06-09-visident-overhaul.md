@@ -54,7 +54,7 @@ Expected: prints Gradle 8.13 and a JVM version ≥ 17. If the JVM is < 17, fix `
 agp = "8.13.2"
 kotlin = "2.3.21"
 ksp = "2.3.9"
-coreKtx = "1.19.0"
+coreKtx = "1.18.0"
 activityCompose = "1.13.0"
 lifecycle = "2.10.0"
 composeBom = "2026.05.01"
@@ -120,7 +120,7 @@ ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 hilt = { id = "com.google.dagger.hilt.android", version.ref = "hiltAndroid" }
 ```
 
-**Compat constraint:** Hilt 2.59+ hard-requires AGP 9.0+, so on the AGP-8 line Hilt is pinned to **2.58** (its latest AGP-8-compatible release), not 2.59.x.
+**Compat constraints (AGP-8 ceilings):** Hilt 2.59+ hard-requires AGP 9.0+, so Hilt is pinned to **2.58** (latest AGP-8-compatible). `core-ktx 1.19.0` requires AGP 9.1 / compileSdk 37, so core-ktx is pinned to **1.18.0** (latest AGP-8-compatible).
 
 Changes vs. old: dropped all `navigation3-*`, `lifecycle-viewmodel-navigation3`, `material3-adaptive-navigation3`, `androidx-hilt-compiler`; swapped `coil-compose` to `io.coil-kt.coil3`; swapped `kotlinx-serialization-core` → `-json`; added `lifecycle-runtime-compose`, `lifecycle-viewmodel-compose`, `material-icons-extended`; moved `ksp` + `hilt` to the `[plugins]` table; unified serialization plugin to the Kotlin version; removed explicit `ui-text-google-fonts` version (now BOM-managed).
 
