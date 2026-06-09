@@ -16,13 +16,9 @@ import javax.inject.Singleton
 object DatabaseModule {
 
     @Provides
-    @Singleton // only 1
+    @Singleton
     fun provideAppDatabase(@ApplicationContext appContext: Context): AppDB {
-        return Room.databaseBuilder(
-            appContext,
-            AppDB::class.java,
-            "visident_db" // Ensure this name is consistent
-        ).build()
+        return Room.databaseBuilder(appContext, AppDB::class.java, "visident_db").build()
     }
 
     @Provides

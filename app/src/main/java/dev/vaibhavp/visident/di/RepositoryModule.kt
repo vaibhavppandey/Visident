@@ -11,17 +11,13 @@ import dev.vaibhavp.visident.repo.SessionRepository
 import javax.inject.Singleton
 
 @Module
-@InstallIn(SingletonComponent::class) // tied to app lifecycle
+@InstallIn(SingletonComponent::class)
 object RepositoryModule {
 
     @Provides
     @Singleton
     fun provideSessionRepository(
-        sessionDao: SessionDao, // she knows
-        @ApplicationContext context: Context // the useless app provides context
-    ): SessionRepository {
-        return SessionRepository(sessionDao, context)
-    }
-
-    // You can add @Provides methods for other repositories here in the future
+        sessionDao: SessionDao,
+        @ApplicationContext context: Context,
+    ): SessionRepository = SessionRepository(sessionDao, context)
 }

@@ -3,12 +3,6 @@ package dev.vaibhavp.visident
 import android.app.Application
 import dagger.hilt.android.HiltAndroidApp
 
-// empty for hilt ofc
+/** Application entry point. Annotated for Hilt so it can generate the DI component. */
 @HiltAndroidApp
-class VisidentApplication : Application() {
-
-    override fun onCreate() {
-        super.onCreate()
-        // hilt init lmao
-    }
-}
+class VisidentApplication : Application()

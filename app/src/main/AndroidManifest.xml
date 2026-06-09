@@ -25,7 +25,7 @@
         </activity>
         <meta-data
             android:name="fontProviderRequests"
-            android:value="Inter" />  <!-- We'll replace this placeholder -->
+            android:value="Inter" />
         <meta-data
             android:name="fontProviderCerts"
             android:value="@array/com_google_android_gms_fonts_certs" />
