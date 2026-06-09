@@ -75,7 +75,7 @@ Material3, Room 2.7.2, Hilt 2.57.1, CameraX 1.5.0-rc01, Coil 2.7.0, Java 11.
 | KSP | 2.2.10-2.0.2 | 2.3.9 |
 | Compose BOM | 2025.08.01 | 2026.05.01 (Material3 1.4.x = Expressive stable) |
 | Room | 2.7.2 | 2.8.4 |
-| Hilt (dagger) | 2.57.1 | 2.59.2 |
+| Hilt (dagger) | 2.57.1 | 2.58 (latest AGP-8-compatible; 2.59+ needs AGP 9) |
 | hilt-navigation-compose | 1.2.0 | 1.3.0 |
 | CameraX (core/compose/lifecycle/camera2) | 1.5.0-rc01 | 1.6.1 |
 | navigation-compose | 2.9.3 | 2.9.8 |

@@ -59,7 +59,7 @@ activityCompose = "1.13.0"
 lifecycle = "2.10.0"
 composeBom = "2026.05.01"
 roomRuntime = "2.8.4"
-hiltAndroid = "2.59.2"
+hiltAndroid = "2.58"
 hiltNavigationCompose = "1.3.0"
 camerax = "1.6.1"
 accompanist = "0.37.3"
@@ -119,6 +119,8 @@ jetbrains-kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serializati
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 hilt = { id = "com.google.dagger.hilt.android", version.ref = "hiltAndroid" }
 ```
+
+**Compat constraint:** Hilt 2.59+ hard-requires AGP 9.0+, so on the AGP-8 line Hilt is pinned to **2.58** (its latest AGP-8-compatible release), not 2.59.x.
 
 Changes vs. old: dropped all `navigation3-*`, `lifecycle-viewmodel-navigation3`, `material3-adaptive-navigation3`, `androidx-hilt-compiler`; swapped `coil-compose` to `io.coil-kt.coil3`; swapped `kotlinx-serialization-core` → `-json`; added `lifecycle-runtime-compose`, `lifecycle-viewmodel-compose`, `material-icons-extended`; moved `ksp` + `hilt` to the `[plugins]` table; unified serialization plugin to the Kotlin version; removed explicit `ui-text-google-fonts` version (now BOM-managed).
 
@@ -2523,9 +2525,9 @@ object RepositoryModule {
 
 1. **Tagline (line ~13):** replace `*A modern Android application demonstrating session-based image capture with metadata management using cutting-edge Android technologies.*` with `*A session-based camera app for capturing and organizing photo sessions, built with Jetpack Compose and Material 3 Expressive.*`
 
-2. **Technologies table (lines ~141-149):** update versions to: Compose BOM `2026.05.01`, Navigation Compose `2.9.8`, Room `2.8.4`, Hilt `2.59.2`, CameraX `1.6.1`, Lifecycle `2.10.0`. Add rows: Kotlin `2.3.21`, AGP `8.13.2`, Coil `3.4.0`.
+2. **Technologies table (lines ~141-149):** update versions to: Compose BOM `2026.05.01`, Navigation Compose `2.9.8`, Room `2.8.4`, Hilt `2.58`, CameraX `1.6.1`, Lifecycle `2.10.0`. Add rows: Kotlin `2.3.21`, AGP `8.13.2`, Coil `3.4.0`.
 
-3. **Key Libraries block (lines ~153-177):** replace `kapt(...)` lines with `ksp(...)`; change `io.coil-kt:coil-compose:2.7.0` → `io.coil-kt.coil3:coil-compose:3.4.0`; `androidx.camera:camera-compose:1.5.0-rc01` → `:1.6.1`; `androidx.room:room-ktx:2.7.2` → `:2.8.4` and its compiler line to `ksp("androidx.room:room-compiler:2.8.4")`; `com.google.dagger:hilt-android:2.57.1` → `:2.59.2` (+ ksp compiler); `androidx.navigation:navigation-compose:2.9.3` → `:2.9.8`; replace `org.jetbrains.kotlinx:kotlinx-serialization-core:1.9.0` → `kotlinx-serialization-json:1.11.0`.
+3. **Key Libraries block (lines ~153-177):** replace `kapt(...)` lines with `ksp(...)`; change `io.coil-kt:coil-compose:2.7.0` → `io.coil-kt.coil3:coil-compose:3.4.0`; `androidx.camera:camera-compose:1.5.0-rc01` → `:1.6.1`; `androidx.room:room-ktx:2.7.2` → `:2.8.4` and its compiler line to `ksp("androidx.room:room-compiler:2.8.4")`; `com.google.dagger:hilt-android:2.57.1` → `:2.58` (+ ksp compiler); `androidx.navigation:navigation-compose:2.9.3` → `:2.9.8`; replace `org.jetbrains.kotlinx:kotlinx-serialization-core:1.9.0` → `kotlinx-serialization-json:1.11.0`.
 
 4. **Prerequisites (lines ~263-267):** `Java Version: 11` → `Java Version: 17`.
 
