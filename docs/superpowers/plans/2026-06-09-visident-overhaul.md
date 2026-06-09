@@ -555,6 +555,8 @@ git commit -m "feat(theme): Material 3 Expressive theme with seeded teal scheme,
 
 In this phase the new data methods and ViewModels are added **alongside** the existing `SessionViewModel` so the project keeps compiling. The old VM and the legacy DAO/repo methods are deleted in Phase 3 once screens migrate.
 
+> **Review-driven refinement (applied):** the repository's blocking file-IO methods (`getImagesForSession`, `moveCachedImagesToSession`, `createTempImageFile`, `clearCache`, plus the `FileUtils` calls inside `saveSession`/`deleteSession`) are `suspend` + `withContext(Dispatchers.IO)` so disk work never runs on the main thread; `CaptureViewModel.cameraControl`/`meteringPointFactory` are `@Volatile` (written from the CameraX callback thread, read from UI). The unused `cameraInfo` field was dropped.
+
 ## Task 2.1: Make the DAO reactive and add CRUD
 
 **Files:**
