@@ -1067,6 +1067,8 @@ git commit -m "feat(data): reactive Flow DAO, delete/update, split into Capture 
 
 Wires the new ViewModels in, redesigns every screen, fixes the gaps, then removes the legacy code. Each task keeps the build compiling on its own where possible; the final removal task (3.9) is what deletes `SessionViewModel`, so the build is only guaranteed green again after **3.9**. Run the Phase 3 build at 3.10.
 
+> **Review-driven refinements (applied):** `ZoomableImage` gained an `onZoomChange` callback and the full-screen `HorizontalPager` sets `userScrollEnabled = !zoomed`, so page-swipe is disabled while an image is zoomed (otherwise pan and swipe fight). The detail image grid uses `itemsIndexed(images, key = { _, file -> file.path })` instead of `items` + `indexOf` (avoids an O(n²) lookup and gives stable keys).
+
 ## Task 3.1: Add a reusable ZoomableImage component
 
 **Files:**
