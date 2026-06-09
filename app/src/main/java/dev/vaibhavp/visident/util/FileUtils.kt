@@ -5,11 +5,15 @@ import timber.log.Timber
 import java.io.File
 import java.io.IOException
 
+/**
+ * Helpers for the app's session image storage, rooted at the app-specific external media
+ * directory (no storage permission required; removed on uninstall).
+ */
 object FileUtils {
 
     private fun getAppFolder(context: Context): File {
         val appSpecificMediaDir = context.externalMediaDirs.firstOrNull()
-            ?: throw IOException("External media storage not available. Please ensure storage permission is granted.")
+            ?: throw IOException("External media storage is not available.")
         val sessionsDir = File(appSpecificMediaDir, "Sessions")
         if (!sessionsDir.exists()) {
             sessionsDir.mkdirs()
@@ -18,8 +22,7 @@ object FileUtils {
     }
 
     fun createSessionFolder(context: Context, sessionId: String): File {
-        val appSessionsBaseFolder = getAppFolder(context)
-        val sessionFolder = File(appSessionsBaseFolder, sessionId)
+        val sessionFolder = File(getAppFolder(context), sessionId)
         if (!sessionFolder.exists()) {
             sessionFolder.mkdirs()
         }
@@ -28,12 +31,18 @@ object FileUtils {
 
     fun getSessionImages(context: Context, sessionId: String): List<File> {
         val folder = createSessionFolder(context, sessionId)
-        // only imazes
-        return folder.listFiles { file ->
-            file.isFile && (file.name.endsWith(".jpg", true) ||
-                    file.name.endsWith(".jpeg", true) ||
-                    file.name.endsWith(".png", true))
-        }?.toList() ?: emptyList()
+        // Return image files only, sorted by capture time (filename carries the timestamp).
+        return folder.listFiles { file -> file.isImage() }
+            ?.sortedBy { it.name }
+            ?: emptyList()
+    }
+
+    /** Removes a session's image folder and all its contents. Used when deleting a session. */
+    fun deleteSessionFolder(context: Context, sessionId: String) {
+        val folder = File(getAppFolder(context), sessionId)
+        if (folder.exists() && !folder.deleteRecursively()) {
+            Timber.w("Failed to fully delete session folder: %s", sessionId)
+        }
     }
 
     private fun getCacheFolder(context: Context): File {
@@ -44,25 +53,16 @@ object FileUtils {
 
     fun createTempImageFile(context: Context): File {
         val cacheFolder = getCacheFolder(context)
-        val timeStamp = System.currentTimeMillis()
-        return File(cacheFolder, "IMG_${timeStamp}.jpg")
+        return File(cacheFolder, "IMG_${System.currentTimeMillis()}.jpg")
     }
 
     fun getCachedImages(context: Context): List<File> {
-        val cacheFolder = getCacheFolder(context)
-        return cacheFolder.listFiles { file ->
-            file.isFile && (file.name.endsWith(".jpg", true) ||
-                    file.name.endsWith(".jpeg", true) ||
-                    file.name.endsWith(".png", true))
-        }?.toList() ?: emptyList()
+        return getCacheFolder(context).listFiles { file -> file.isImage() }?.toList() ?: emptyList()
     }
 
     fun clearCache(context: Context) {
-        val cacheFolder = getCacheFolder(context)
-        cacheFolder.listFiles()?.forEach { file ->
-            if (file.isFile) {
-                file.delete()
-            }
+        getCacheFolder(context).listFiles()?.forEach { file ->
+            if (file.isFile) file.delete()
         }
     }
 
@@ -71,19 +71,23 @@ object FileUtils {
         if (cachedImages.isEmpty()) return
 
         val sessionFolder = createSessionFolder(context, sessionId)
-
         cachedImages.forEach { file ->
             val targetFile = File(sessionFolder, file.name)
             try {
+                // Prefer an atomic rename; fall back to copy+delete across filesystem boundaries.
                 if (!file.renameTo(targetFile)) {
                     file.copyTo(targetFile, overwrite = true)
                     file.delete()
                 }
             } catch (e: Exception) {
-                e.printStackTrace()
-                Timber.e(e)
+                Timber.e(e, "Failed to move cached image %s", file.name)
             }
         }
         clearCache(context)
     }
+
+    private fun File.isImage(): Boolean =
+        isFile && (name.endsWith(".jpg", true) ||
+            name.endsWith(".jpeg", true) ||
+            name.endsWith(".png", true))
 }
