@@ -31,7 +31,8 @@ interface SessionDao {
     /** Case-insensitive search by name or session id, filtered in SQL rather than in memory. */
     @Query(
         "SELECT * FROM sessions " +
-            "WHERE name LIKE '%' || :query || '%' OR sessionId LIKE '%' || :query || '%' " +
+            "WHERE name LIKE '%' || :query || '%' ESCAPE '\\' " +
+            "OR sessionId LIKE '%' || :query || '%' ESCAPE '\\' " +
             "ORDER BY createdAt DESC",
     )
     fun searchSessions(query: String): Flow<List<SessionEntity>>

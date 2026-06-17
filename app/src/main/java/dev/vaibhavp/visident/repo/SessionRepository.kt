@@ -36,7 +36,15 @@ class SessionRepository @Inject constructor(
 
     fun observeAllSessions(): Flow<List<SessionEntity>> = dao.observeAllSessions()
 
-    fun searchSessions(query: String): Flow<List<SessionEntity>> = dao.searchSessions(query)
+    fun searchSessions(query: String): Flow<List<SessionEntity>> {
+        // Escape LIKE metacharacters (matching the DAO's ESCAPE '\') so a literal % or _ in the
+        // query matches itself instead of acting as a wildcard. Backslash must be escaped first.
+        val escaped = query
+            .replace("\\", "\\\\")
+            .replace("%", "\\%")
+            .replace("_", "\\_")
+        return dao.searchSessions(escaped)
+    }
 
     suspend fun getImagesForSession(sessionId: String): List<File> =
         withContext(Dispatchers.IO) { FileUtils.getSessionImages(context, sessionId) }

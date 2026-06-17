@@ -75,15 +75,15 @@ object FileUtils {
             val targetFile = File(sessionFolder, file.name)
             try {
                 // Prefer an atomic rename; fall back to copy+delete across filesystem boundaries.
-                if (!file.renameTo(targetFile)) {
-                    file.copyTo(targetFile, overwrite = true)
-                    file.delete()
-                }
+                if (file.renameTo(targetFile)) return@forEach
+                file.copyTo(targetFile, overwrite = true)
+                // Delete the source only after a verified copy, so a failed move keeps the original.
+                file.delete()
             } catch (e: Exception) {
+                // Leave the source in the cache on failure rather than destroying an unsaved photo.
                 Timber.e(e, "Failed to move cached image %s", file.name)
             }
         }
-        clearCache(context)
     }
 
     private fun File.isImage(): Boolean =

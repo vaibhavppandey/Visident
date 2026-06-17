@@ -120,6 +120,10 @@ fun EndSessionScreen(
                                 Toast.makeText(context, "Session saved", Toast.LENGTH_SHORT).show()
                                 onNavigateToStart()
                             },
+                            onError = { message ->
+                                isLoading = false
+                                Toast.makeText(context, message, Toast.LENGTH_LONG).show()
+                            },
                         )
                     },
                     enabled = isFormValid,

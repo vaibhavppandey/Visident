@@ -40,7 +40,18 @@ fun ZoomableImage(
                 detectTransformGestures { _, pan, zoom, _ ->
                     val newScale = (scale * zoom).coerceIn(minScale, maxScale)
                     scale = newScale
-                    offset = if (newScale == 1f) Offset.Zero else offset + pan
+                    offset = if (newScale == 1f) {
+                        Offset.Zero
+                    } else {
+                        // Clamp pan so the scaled image edges can't cross the viewport centre,
+                        // i.e. the image can never be dragged fully off-screen.
+                        val maxX = size.width.toFloat() * (newScale - 1f) / 2f
+                        val maxY = size.height.toFloat() * (newScale - 1f) / 2f
+                        Offset(
+                            x = (offset.x + pan.x).coerceIn(-maxX, maxX),
+                            y = (offset.y + pan.y).coerceIn(-maxY, maxY),
+                        )
+                    }
                     onZoomChange(newScale > 1f)
                 }
             },

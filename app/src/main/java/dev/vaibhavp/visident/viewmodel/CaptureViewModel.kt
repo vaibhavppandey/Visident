@@ -20,6 +20,9 @@ import dev.vaibhavp.visident.repo.SessionRepository
 import dev.vaibhavp.visident.util.CameraUtility
 import androidx.compose.ui.geometry.Offset
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -101,6 +104,9 @@ class CaptureViewModel @Inject constructor(
             )
             cameraControl = camera.cameraControl
             _hasFlashUnit.value = camera.cameraInfo.hasFlashUnit()
+            // A camera with no flash unit (e.g. most front cameras) must not stay FLASH_MODE_ON,
+            // especially as the flash toggle is then hidden and could not be turned back off.
+            if (!_hasFlashUnit.value) _flashEnabled.value = false
             applyFlashMode()
             awaitCancellation()
         } catch (e: CancellationException) {
@@ -160,15 +166,33 @@ class CaptureViewModel @Inject constructor(
         age: Int,
         imageCount: Int,
         onComplete: () -> Unit,
+        onError: (String) -> Unit,
     ) {
         viewModelScope.launch {
-            repository.saveSession(
-                SessionEntity(sessionId = sessionId, name = name, age = age, imageCount = imageCount),
-            )
-            repository.moveCachedImagesToSession(sessionId)
-            repository.clearCache()
-            _pictureCount.update { 0 }
-            onComplete()
+            try {
+                repository.saveSession(
+                    SessionEntity(sessionId = sessionId, name = name, age = age, imageCount = imageCount),
+                )
+                // Moves each cached photo into the session folder, deleting sources only on success.
+                repository.moveCachedImagesToSession(sessionId)
+                _pictureCount.update { 0 }
+                onComplete()
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Timber.e(e, "Failed to finalize session")
+                onError(e.message ?: "Couldn't save session")
+            }
+        }
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        // Leaving the capture flow without finalizing (back arrow / system back) must not leave
+        // captured photos in the shared cache, or they would be swept into the next session.
+        // viewModelScope is already cancelled here, so clear on an independent IO scope.
+        CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {
+            runCatching { repository.clearCache() }
         }
     }
 }

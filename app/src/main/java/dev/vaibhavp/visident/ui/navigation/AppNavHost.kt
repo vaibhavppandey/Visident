@@ -21,8 +21,8 @@ fun VisidentNavHost(navController: NavHostController) {
     NavHost(navController = navController, startDestination = StartSessionRoute) {
         composable<StartSessionRoute> {
             StartSessionScreen(
-                onStartNewSessionClick = { navController.navigate(CaptureGraph) },
-                onSearchSessionClick = { navController.navigate(SearchSessionsRoute) },
+                onStartNewSessionClick = { navController.navigate(CaptureGraph) { launchSingleTop = true } },
+                onSearchSessionClick = { navController.navigate(SearchSessionsRoute) { launchSingleTop = true } },
             )
         }
 
@@ -31,7 +31,7 @@ fun VisidentNavHost(navController: NavHostController) {
                 CameraCaptureScreen(
                     viewModel = entry.captureGraphViewModel(navController),
                     onBack = { navController.popBackStack() },
-                    onEndSessionClick = { navController.navigate(EndSessionRoute) },
+                    onEndSessionClick = { navController.navigate(EndSessionRoute) { launchSingleTop = true } },
                 )
             }
             composable<EndSessionRoute> { entry ->
@@ -53,7 +53,7 @@ fun VisidentNavHost(navController: NavHostController) {
             SearchSessionScreen(
                 viewModel = hiltViewModel(),
                 onBack = { navController.popBackStack() },
-                onNavigateToSessionDetails = { id -> navController.navigate(SessionDetailsRoute(id)) },
+                onNavigateToSessionDetails = { id -> navController.navigate(SessionDetailsRoute(id)) { launchSingleTop = true } },
             )
         }
 
