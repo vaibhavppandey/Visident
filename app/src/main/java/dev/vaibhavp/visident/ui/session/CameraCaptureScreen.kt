@@ -9,8 +9,10 @@ import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -21,6 +23,7 @@ import androidx.compose.material.icons.filled.Cameraswitch
 import androidx.compose.material.icons.filled.FlashOff
 import androidx.compose.material.icons.filled.FlashOn
 import androidx.compose.material.icons.filled.PhotoCamera
+import androidx.compose.material.icons.filled.PhotoLibrary
 import androidx.compose.material.icons.rounded.Warning
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
@@ -39,6 +42,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
@@ -175,41 +179,49 @@ private fun CameraContent(
             },
         )
 
-        // Photo counter badge.
-        Surface(
-            shape = CircleShape,
-            color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.85f),
-            modifier = Modifier
-                .align(Alignment.TopEnd)
-                .padding(top = 72.dp, end = 16.dp)
-                .size(44.dp),
-        ) {
-            Box(contentAlignment = Alignment.Center) {
-                Text(
-                    text = "$pictureCount",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSecondaryContainer,
-                )
-            }
-        }
-
-        // Capture (center) + end-session (right) controls.
+        // Bottom control row: photo count (left) · capture (center) · end session (right).
+        // A single Box wraps the FAB's height so the side controls sit vertically centred
+        // against the FAB instead of sinking to its baseline.
         Box(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
-                .fillMaxSize()
+                .fillMaxWidth()
                 .padding(bottom = 36.dp),
+            contentAlignment = Alignment.Center,
         ) {
+            // Running photo count. A translucent scrim pill keeps it legible over any frame and
+            // balances the End session button on the opposite side.
+            Surface(
+                shape = CircleShape,
+                color = Color.Black.copy(alpha = 0.55f),
+                contentColor = Color.White,
+                modifier = Modifier
+                    .align(Alignment.CenterStart)
+                    .padding(start = 24.dp),
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                ) {
+                    Icon(
+                        Icons.Filled.PhotoLibrary,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp),
+                    )
+                    Text(text = "$pictureCount", style = MaterialTheme.typography.titleMedium)
+                }
+            }
+
             LargeFloatingActionButton(
                 onClick = { viewModel.takePicture(context) },
-                modifier = Modifier.align(Alignment.BottomCenter),
             ) {
                 Icon(Icons.Filled.PhotoCamera, "Capture photo", Modifier.size(36.dp))
             }
             Button(
                 onClick = onEndSessionClick,
                 modifier = Modifier
-                    .align(Alignment.BottomEnd)
+                    .align(Alignment.CenterEnd)
                     .padding(end = 24.dp),
             ) {
                 Text("End session")
